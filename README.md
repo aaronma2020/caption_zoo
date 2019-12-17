@@ -18,7 +18,27 @@ pytorch1.0
 
 
 
-Implemented models:
+**Run**
+
+dataset :Please download the coco dataset by coco official website.
+
+ in the project root run these:
+
+``` mkdir -p data/coco ```
+
+```cd data/coco```
+
+Then put your coco dataset in data/coco
+
+```mv train2014 val2014/*```
+
+```mv train2014 coco_image2014```
+
+split cocodataset in Karpathy type:
+
+```python karpathy_split.py```
+
+**Implemented models**:
 
 * show and tell (NIC) 2015CVPR  [paper](https://arxiv.org/abs/1411.4555v2) 
 
