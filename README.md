@@ -18,7 +18,7 @@ pytorch1.0
 
 
 
-**Run**
+**Data process**
 
 dataset :Please download the coco dataset by coco official website.
 
@@ -38,11 +38,31 @@ split cocodataset in Karpathy type:
 
 ```python karpathy_split.py```
 
+
+
 **Implemented models**:
 
-training information in train/model_name/model_name_readme.md
+training information in train/model_name/readme.md
 
-eg : train/nic/NIC_readme.md
+eg : train/nic/readme.md
 
 * show and tell (NIC) 2015CVPR  [paper](https://arxiv.org/abs/1411.4555v2) 
+
+
+
+**Run**
+
+eg: run nic model
+
+```cd train/nic```
+
+``` python nic.py --version=baseline```
+
+
+
+**eval**
+
+```cd train/nic```
+
+```python nic.py --version=baseline```
 
