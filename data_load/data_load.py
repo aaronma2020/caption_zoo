@@ -10,26 +10,26 @@ def data_load(dataset, cfg, type):
     '''读取数据'''
     if type == 'train':
         if dataset == 'karpathy':
-            train_data = train_load(cfg.img_dir, cfg.train_kar_cap, train_transform(), cfg, cfg.batch_size, shuffle=True,
+            train_data = train_load(cfg.img_dir, cfg.train_kar_cap, train_transform(cfg.model), cfg, cfg.batch_size, shuffle=True,
                                     num_workers=cfg.num_workers)
-            val_data = val_load(cfg.img_dir, cfg.val_kar_cap, val_transform(), batch_size=1, shuffle=False,
+            val_data = val_load(cfg.img_dir, cfg.val_kar_cap, val_transform(cfg.model), batch_size=1, shuffle=False,
                                 num_workers=cfg.num_workers)
             return train_data, val_data, cfg.val_kar_cap
 
         if dataset == 'coco':
-            train_data = train_load(cfg.img_dir, cfg.train_coco_cap, train_transform(), cfg, cfg.batch_size, shuffle=True,
+            train_data = train_load(cfg.img_dir, cfg.train_coco_cap, train_transform(cfg.model), cfg, cfg.batch_size, shuffle=True,
                                     num_workers=cfg.num_workers)
-            val_data = val_load(cfg.img_dir, cfg.val_coco_cap, val_transform(), batch_size=1, shuffle=False,
+            val_data = val_load(cfg.img_dir, cfg.val_coco_cap, val_transform(cfg.model), batch_size=1, shuffle=False,
                                 num_workers=cfg.num_workers)
             return train_data, val_data
 
     else:
         if dataset == 'karpathy':
-            test_data = val_load(cfg.img_dir, cfg.test_kar_cap, val_transform(), batch_size=1, shuffle=False,
+            test_data = val_load(cfg.img_dir, cfg.test_kar_cap, val_transform(cfg.model), batch_size=1, shuffle=False,
                                  num_workers=cfg.num_workers)
             return test_data
 
         if dataset == 'coco':
-            test_data = val_load(cfg.img_dir, cfg.test_coco_cap, val_transform(), batch_size=1, shuffle=False,
+            test_data = val_load(cfg.img_dir, cfg.test_coco_cap, val_transform(cfg.model), batch_size=1, shuffle=False,
                                  num_workers=cfg.num_workers)
             return test_data

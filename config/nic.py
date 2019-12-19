@@ -7,6 +7,8 @@ from vocab import Vocabulary
 class NIC_cfg():
 
     def __init__(self):
+
+        self.model = 'nic'
         # model parameters (模型参数)
         self.fea_dim = 2048  # features dimension (图片的特征维度）
         self.embed_dim = 512  # embedding dimension (词嵌入维度）

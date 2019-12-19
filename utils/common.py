@@ -19,26 +19,44 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
 
 
-def train_transform():
+def train_transform(type):
     '''handle training images'''
     '''对训练图片的处理'''
-    train_transform = transforms.Compose([
-        transforms.Resize([400, 400], Image.ANTIALIAS),  # 重置图像分辨率，使用ANTTALIAS抗锯齿方法
-        transforms.RandomCrop(299),
-        transforms.RandomHorizontalFlip(),
-        transforms.Normalize((0.485, 0.456, 0.406),
-                             (0.229, 0.224, 0.225))])
+    if type == 'nic':
+        train_transform = transforms.Compose([
+            transforms.Resize([400, 400], Image.ANTIALIAS),  # 重置图像分辨率，使用ANTTALIAS抗锯齿方法
+            transforms.RandomCrop(299),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406),
+                                 (0.229, 0.224, 0.225))])
+    else:
+        train_transform = transforms.Compose([
+            transforms.Resize([300, 300], Image.ANTIALIAS),  # 重置图像分辨率，使用ANTTALIAS抗锯齿方法
+            transforms.RandomCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406),
+                                 (0.229, 0.224, 0.225))])
     return train_transform
 
 
-def val_transform():
+def val_transform(type):
     '''handle test and val images'''
     '''对验证和测试图片的处理'''
-    val_transform = transforms.Compose([
-        transforms.Resize([299, 299], Image.ANTIALIAS),
-        transforms.ToTensor(),
-        transforms.Normalize((0.485, 0.456, 0.406),
-                             (0.229, 0.224, 0.225))])
+    if type == 'nic':
+        val_transform = transforms.Compose([
+            transforms.Resize([299, 299], Image.ANTIALIAS),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406),
+                                 (0.229, 0.224, 0.225))])
+    else:
+        val_transform = transforms.Compose([
+            transforms.Resize([224,224], Image.ANTIALIAS),
+            transforms.ToTensor(),
+            transforms.Normalize((0.485, 0.456, 0.406),
+                                 (0.229, 0.224, 0.225))])
+
     return val_transform
 
 

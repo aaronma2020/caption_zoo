@@ -139,8 +139,8 @@ class NICDecoder(nn.Module):
         return h, c
 
     def fea_init_state(self, fea_vec):
-        '''obtain the h, c by image features'''
-        '''把图片特征送入lstm返回的h和c'''
+        '''use image features to initiate state of LSTM'''
+        '''用features信息初始化LSTM状态'''
         batch_size = fea_vec.size(0)
         h, c = self.zero_init_state(batch_size)
         fea2hid = self.fea2hid(fea_vec)

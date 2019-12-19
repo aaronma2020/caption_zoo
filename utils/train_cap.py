@@ -14,7 +14,7 @@ def optimize(model, loss, optim):
     optim.step()
 
 
-def train_cap(args, cfg, model, train_data, val_data, val_cap):
+def train_cap(args, cfg, model, train_data, val_data, val_cap, type='nic'):
     '''main function of training caption'''
     '''训练caption的循环函数'''
     # create save file (创建保存文件夹)
@@ -39,16 +39,28 @@ def train_cap(args, cfg, model, train_data, val_data, val_cap):
         model.train()
         epoch_loss = 0
         total_step = len(train_data)
+
         for i, (image, cap, length) in tqdm(enumerate(train_data)):
+            batch_size = image.size(0)
             image = image.to(device)
             cap = cap.to(device)
             length = [len - 1 for len in length]
             target = pack_padded_sequence(cap[:, 1:], length, batch_first=True)[0]
 
-            weight = model(image, cap, length)
-            weight = pack_padded_sequence(weight, length, batch_first=True)[0]
 
-            loss = criterion(weight, target)
+            if args.model == 'nic':
+                weight= model(image, cap, length)
+                weight = pack_padded_sequence(weight, length, batch_first=True)[0]
+                loss = criterion(weight, target)
+
+
+            if args.model == 'att':
+                weight, alpha, beta = model(image, cap, length)
+                weight = pack_padded_sequence(weight, length, batch_first=True)[0]
+                loss = criterion(weight, target)
+                alpha_loss = torch.sum(torch.pow((1-torch.sum(alpha,1)),2))/batch_size
+                loss += cfg.lam * alpha_loss
+
             epoch_loss += loss.item()
             optimize(model, loss, optimizer)
 
@@ -60,7 +72,12 @@ def train_cap(args, cfg, model, train_data, val_data, val_cap):
         for i, (image, img_id) in tqdm(enumerate(val_data)):
             image = image.to(device)
             img_id = img_id[0]
-            sentence = model.generate(image, beam_num=cfg.beam_num)
+
+            if args.model == 'nic':
+                sentence = model.generate(image, beam_num=cfg.beam_num)
+            elif args.model == 'att':
+                sentence, alpha, beta = model.generate(image, beam_num=cfg.beam_num)
+
             sentence = ' '.join(sentence)
             item = {'image_id': int(img_id), 'caption': sentence}
             sentence_list.append(item)
