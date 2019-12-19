@@ -40,16 +40,6 @@ split cocodataset in Karpathy type:
 
 
 
-**Implemented models**:
-
-training information in train/model_name/readme.md
-
-eg : train/nic/readme.md
-
-* show and tell (NIC) 2015CVPR  [paper](https://arxiv.org/abs/1411.4555v2) 
-
-
-
 **Run**
 
 eg: run nic model
@@ -65,4 +55,17 @@ eg: run nic model
 ```cd train/nic```
 
 ```python nic.py --version=baseline```
+
+**Implemented models**:
+
+training information in train/model_name/readme.md
+
+eg : train/nic/readme.md
+
+* show and tell (NIC) 2015CVPR  [[paper]](https://arxiv.org/abs/1411.4555v2) 
+* Show,attend and tell 2015ICLR [[paper]](https://arxiv.org/abs/1502.03044)
+
+
+
+
 
