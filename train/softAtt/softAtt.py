@@ -27,11 +27,10 @@ def main(args):
     if not os.path.exists(log):
         os.makedirs(log)
     log_path = os.path.join(log, 'log.txt')
-    log_content = 'soft attention的baseline'
+    log_content = 'attention的baseline, 使用vgg19_bn, fine tune所有层'
 
     with open(log_path, 'w') as f:
         f.write(log_content)
-
     # load data (读取数据）
     train_data, val_data, val_cap = data_load(args.dataset, softAtt_cfg, 'train')
 

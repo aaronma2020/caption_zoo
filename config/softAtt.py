@@ -1,5 +1,5 @@
-''' the configure of NIC'''
-''' NIC的配置文件'''
+''' the configure of soft attention'''
+''' soft attention 的配置文件'''
 from .nic import NIC_cfg
 
 class SoftAtt_cfg(NIC_cfg):
@@ -12,4 +12,9 @@ class SoftAtt_cfg(NIC_cfg):
         self.fea_dim = 512
         self.att_dim = 100
         self.batch_size = 64
-        self.lam = 1e-5 # attention regular loss rate (attention正则损失比重）
+        self.lam = 1 # attention regular loss rate (attention正则损失比重）
+        self.en_lr = 1e-4
+
+        self.ft_batch_size = 32
+
+

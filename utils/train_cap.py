@@ -2,19 +2,22 @@ import os
 import torch
 from tqdm import tqdm
 from torch.nn.utils.rnn import pack_padded_sequence
+from data_load.data_load import data_load
 from .save import create_file, create_result, save_loss, save_sentence, save_metrics, save_best_model
 from .common import coco_metrics
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def optimize(model, loss, optim):
+def optimize(model, loss, optim, grad_clip=None):
     '''back propagate'''
     '''反向传播'''
     model.zero_grad()
+    if grad_clip != None:
+        torch.nn.utils.clip_grad_norm_(model.decoder.parameters(), grad_clip)
     loss.backward()
     optim.step()
 
 
-def train_cap(args, cfg, model, train_data, val_data, val_cap, type='nic'):
+def train_cap(args, cfg, model, train_data, val_data, val_cap):
     '''main function of training caption'''
     '''训练caption的循环函数'''
     # create save file (创建保存文件夹)
@@ -30,9 +33,12 @@ def train_cap(args, cfg, model, train_data, val_data, val_cap, type='nic'):
         # fine turn cnn (开始训练cnn)
         if epoch == cfg.ft_epoch:
             print('*** fine tune cnn ***')
+            # load best model within 20 epochs (加载20轮中最好的模型）
+            model.load_state_dict((torch.load(best_model_path)['model']))
             optimizer = torch.optim.Adam([{'params': model.decoder.parameters(), 'lr': cfg.de_lr},
                                           {'params': model.encoder.parameters(), 'lr': cfg.en_lr}, ],
                                          betas=(0.8, 0.999))
+
             model.encoder.fine_tune()
         print('*** epoch:{} ***'.format(epoch))
         # ======= training(训练) ======
@@ -58,7 +64,9 @@ def train_cap(args, cfg, model, train_data, val_data, val_cap, type='nic'):
                 weight, alpha, beta = model(image, cap, length)
                 weight = pack_padded_sequence(weight, length, batch_first=True)[0]
                 loss = criterion(weight, target)
-                alpha_loss = torch.sum(torch.pow((1-torch.sum(alpha,1)),2))/batch_size
+
+                alpha_loss = torch.sum(torch.pow((1-torch.sum(alpha,1)),2)) / batch_size
+
                 loss += cfg.lam * alpha_loss
 
             epoch_loss += loss.item()
@@ -113,10 +121,12 @@ def eval_cap(args, cfg, model, test_data):
     for i, (image, img_id) in tqdm(enumerate(test_data)):
         image = image.to(device)
         img_id = img_id[0]
-        sentence = model.generate(image, args.beam_num)
+
+        sentence = model.generate(image, args.beam_num, need_extra=False)
         sentence = ' '.join(sentence)
         item = {'image_id': int(img_id), 'caption': sentence}
         sentence_list.append(item)
+
 
     print('*** compute scores ***')
     sen_json = save_sentence(sentence_list, 1, sen_path)

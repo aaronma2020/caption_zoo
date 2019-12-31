@@ -8,15 +8,15 @@ import torchvision.models as models
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-
+import torchvision.utils as u
 class AttEncoder(nn.Module):
     ''' encoder of cnn to represent images'''
     '''CNN编码器，对图片进行表征'''
     def __init__(self):
         super(AttEncoder, self).__init__()
 
-        cnn = models.vgg16(pretrained=True)
-        modules = list(list(cnn.children())[:-2][0].children())[:-7]
+        cnn = models.vgg19_bn(pretrained=True)
+        modules = list(list(cnn.children())[:-2][0].children())[:-1]
         self.cnn = nn.Sequential(*modules)
         self.avgpool = nn.AvgPool2d(14)
         for p in self.cnn.parameters():
@@ -25,13 +25,13 @@ class AttEncoder(nn.Module):
     def forward(self, image):
 
         batch_size = image.size(0)
-        features = self.cnn(image)  # (b,14,14,512)
+        features = self.cnn(image)  # (b,512,14,14)
         fea_vec = self.avgpool(features).view(batch_size, -1)  # (b,512)
         fea_maps = features.permute(0, 2, 3, 1).view(batch_size, 196, -1)
         return fea_vec, fea_maps
 
     def fine_tune(self):
-        for c in list(self.cnn.children())[10:]:
+        for c in list(self.cnn.children())[14:]:
             for p in c.parameters():
                 p.requires_grad = True
 
@@ -41,15 +41,15 @@ class Attention(nn.Module):
     def __init__(self, embed_dim, hid_dim, att_dim):
         super(Attention, self).__init__()
 
-        self.fea_aff = nn.Linear(embed_dim, att_dim)
-        self.hid_aff = nn.Linear(hid_dim, att_dim)
+        self.fea_att = nn.Linear(embed_dim, att_dim)
+        self.hid_att = nn.Linear(hid_dim, att_dim)
         self.att = nn.Linear(att_dim, 1)
 
     def forward(self, fea_maps, hidden):
-        fea_att = self.fea_aff(fea_maps)  # (b,49,512) -> (b,49,100)
-        hid_att = self.hid_aff(hidden)  # (b,512) -> (b,100)
+        fea_att = self.fea_att(fea_maps)  # (b,196,512) -> (b,196,100)
+        hid_att = self.hid_att(hidden)  # (b,512) -> (b,100)
         fusion = fea_att + hid_att.unsqueeze(1)  # (b,49,100)
-        att = self.att(torch.relu(fusion)).squeeze(2)  # eq4: eti = fatt(ai,ht-1) (b,49)
+        att = self.att(torch.relu(fusion)).squeeze(2)  # eq4: eti = fatt(ai,ht-1) (b,196)
         alpha = torch.softmax(att, 1)  # eq5: softmax
         z = (fea_maps * alpha.unsqueeze(2)).sum(1)  # (b,512)
         return z, alpha
@@ -77,15 +77,12 @@ class AttDecoder(nn.Module):
         self.init_h = nn.Linear(self.fea_dim, self.hid_dim)
         self.init_c = nn.Linear(self.fea_dim, self.hid_dim)
 
-        # eq7
-        self.Lh = nn.Linear(self.hid_dim, self.embed_dim)
-        self.Lz = nn.Linear(self.embed_dim, self.embed_dim)
-
         # generate a scalar beta to control rate of attention (Don't use it)
         # 产生一个标量beta，来控制attention的比重 (不使用）
         self.fb = nn.Linear(self.hid_dim, 1)
 
-    def forward(self, fea_vec, fea_maps, cap, length):
+
+    def forward(self, fea_vec, fea_maps, cap, cap_len):
 
         h, c = self.fea_init_state(fea_vec)
 
@@ -93,27 +90,26 @@ class AttDecoder(nn.Module):
         vocab_size = self.vocab_size
         embeddings = self.embed(cap)
 
-        weights = torch.zeros(batch_size, max(length), vocab_size).to(device)
-        alphas = torch.zeros(batch_size, max(length), 196).to(device)
-        betas = torch.zeros(batch_size, max(length), 1).to(device)
-        for t in range(max(length)):
-            att, alpha = self.attention(fea_maps, h)  # att:(b,512)
+        weights = torch.zeros(batch_size, max(cap_len), vocab_size).to(device)
+        alphas = torch.zeros(batch_size, max(cap_len), 196).to(device)
+        betas = torch.zeros(batch_size, max(cap_len), 1).to(device)
+        for t in range(max(cap_len)):
+            z, alpha = self.attention(fea_maps, h)  # att:(b,512)
             beta = torch.sigmoid(self.fb(h))
-            att = beta * att
-            h, c = self.lstmcell(torch.cat([embeddings[:, t, :], att], 1),
+            z = beta * z
+            h, c = self.lstmcell(torch.cat([embeddings[:, t, :], z], 1),
                                  (h, c))
-            pred = self.fc(self.dropout(embeddings[:,t,:] + self.Lh(h) + self.Lz(att)))
+            weight = self.fc(self.dropout(h))
 
-            weights[:, t, :] = pred
+            weights[:, t, :] = weight
             alphas[:, t, :] = alpha
-            betas [:,t,:] = beta
+            betas [:, t ,:] = beta
         return weights, alphas, betas
 
 
     def beam_search(self, fea_vec, fea_maps, num):
         '''generate sentence by beam search'''
         '''beam search搜索句子'''
-        fea_vec = fea_vec.unsqueeze(0)
         # initialize (初始化sentence 和h,c)
         h, c = self.fea_init_state(fea_vec)
         sentences = [[[1], 1]]
@@ -136,9 +132,11 @@ class AttDecoder(nn.Module):
                 inp = self.embed(inp)
                 # the state of the squeeze(对应这个序列的状态)
                 h_cell = h_cells[j]
-                att, alpha = self.attention(fea_maps, h)
+
+                z, alpha = self.attention(fea_maps, h)
                 beta = torch.sigmoid(self.fb(h))
-                h, c = self.lstmcell(torch.cat([inp, beta*att]), h_cell)
+                z = beta * z
+                h, c = self.lstmcell(torch.cat([inp, z], 1), h_cell)
                 # compute probability (计算概率)
                 preds = torch.softmax(self.fc(h), 1)
                 # select the words of No.k maximal probability 取前num个概率最大的单词
@@ -198,15 +196,19 @@ class Att(nn.Module):
         self.encoder = AttEncoder()
         self.decoder = AttDecoder(cfg)
 
-    def forward(self, image, cap, length):
+    def forward(self, image, cap, cap_len):
         fea_vec, fea_maps = self.encoder(image)
-        weight, alpha, beta = self.decoder(fea_vec, fea_maps, cap, length)
+        weight, alpha, beta = self.decoder(fea_vec, fea_maps, cap, cap_len)
 
         return weight, alpha, beta
-    def generate(self, image, beam_num):
+    def generate(self, image, beam_num, need_extra=True):
         fea_vec, fea_maps = self.encoder(image)
         sentence, alpha, beta = self.decoder.beam_search(fea_vec, fea_maps, beam_num)
 
-        return sentence, alpha, beta
+        if need_extra == True:
+            return sentence, alpha, beta
+        else:
+            return sentence
+
 
 
