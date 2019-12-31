@@ -14,13 +14,23 @@
 
 No fine tune CNN:
 
+No image transform(eg RandomCrop, RandomHorizontalFlip )
+
 | method | BLEU1 | BLEU2 | BLEU3 | BLEU4 | METEOR | ROUGE_L | CIDEr | SPICE |
 | ------ | ----- | ----- | ----- | ----- | ------ | ------- | ----- | ----- |
 | nic    | 66.8  | 49.1  | 35.5  | 26.2  | 22.6   | 49.4    | 79.0  | 15.5  |
 
 
 
-Fine tune CNN:
+Fine tune CNN
+
+No image transform(RandomCrop, RandomHorizontalFlip )
+
+| method | BLEU1 | BLEU2 | BLEU3 | BLEU4 | METEOR | ROUGE_L | CIDEr | SPICE |
+| ------ | ----- | ----- | ----- | ----- | ------ | ------- | ----- | ----- |
+| nic    | 70.9  | 53.7  | 40.0  | 30.0  | 25.2   | 53.1    | 94.7  | 17.8  |
+
+with image transform
 
 | method | BLEU1 | BLEU2 | BLEU3 | BLEU4 | METEOR | ROUGE_L | CIDEr | SPICE |
 | ------ | ----- | ----- | ----- | ----- | ------ | ------- | ----- | ----- |
