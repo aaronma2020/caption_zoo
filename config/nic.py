@@ -18,6 +18,7 @@ class NIC_cfg():
         self.de_lr = 4e-4   # learning rate of decoder (解码器的学习率）
         self.beam_num = 3
         self.ft_epoch = 21  # when fine tune encoder (开始训练cnn的轮次）
+        self.grad_clip = 0.1
 
         # save parameters (保存参数）
         self.log = '../../log/{}/{}'
@@ -30,18 +31,22 @@ class NIC_cfg():
         self.eval_sen = '../../eval_log/{}/{}'
         self.eval_metrics = '../../eval_log/{}/{}/metrics.csv'
 
-        # load parameters (读取参数）
-        with open('../../data/coco/vocab.pkl', 'rb') as f:
-            self.vocab = pickle.load(f)
 
+        # coco dataset (coco数据集）
         self.img_dir = '../../data/coco/coco_image2014'
         self.train_coco_cap = '../../data/coco/annotations/captions_train2014.json'
         self.val_coco_cap = '../../data/coco/annotations/captions_val2014.json'
         self.test_coco_cap = '../../data/coco/annotations/captions_test2014.json'
 
-        self.train_kar_cap = '../../data/coco/karpathy_split_train.json'
-        self.val_kar_cap = '../../data/coco/karpathy_split_val.json'
-        self.test_kar_cap = '../../data/coco/karpathy_split_test.json'
+
+        # karpathy split (karpathy 划分）
+        self.train_kar_cap = '../../data/coco/karpathy/karpathy_split_train.json'
+        self.val_kar_cap = '../../data/coco/karpathy/karpathy_split_val.json'
+        self.test_kar_cap = '../../data/coco/karpathy/karpathy_split_test.json'
+        with open('../../data/coco/karpathy/vocab.pkl', 'rb') as f:
+            self.vocab = pickle.load(f)
+
+
 
         #  data loader parameters (data loader参数)
         self.batch_size = 80

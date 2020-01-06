@@ -20,6 +20,7 @@ def optimize(model, loss, optim, grad_clip=None):
 def train_cap(args, cfg, model, train_data, val_data, val_cap):
     '''main function of training caption'''
     '''训练caption的循环函数'''
+
     # create save file (创建保存文件夹)
     loss_path, metrics_path, sen_path, best_model_path = create_file(args.model, args.version, cfg)
     criterion = torch.nn.CrossEntropyLoss().to(device)
@@ -46,23 +47,24 @@ def train_cap(args, cfg, model, train_data, val_data, val_cap):
         epoch_loss = 0
         total_step = len(train_data)
 
-        for i, (image, cap, length) in tqdm(enumerate(train_data)):
+
+        for i, (image, cap, cap_len) in tqdm(enumerate(train_data)):
             batch_size = image.size(0)
             image = image.to(device)
             cap = cap.to(device)
-            length = [len - 1 for len in length]
-            target = pack_padded_sequence(cap[:, 1:], length, batch_first=True)[0]
+            cap_len = [len - 1 for len in cap_len]
+            target = pack_padded_sequence(cap[:, 1:], cap_len, batch_first=True)[0]
 
 
             if args.model == 'nic':
-                weight= model(image, cap, length)
-                weight = pack_padded_sequence(weight, length, batch_first=True)[0]
+                weight= model(image, cap, cap_len)
+                weight = pack_padded_sequence(weight, cap_len, batch_first=True)[0]
                 loss = criterion(weight, target)
 
 
             if args.model == 'att':
-                weight, alpha, beta = model(image, cap, length)
-                weight = pack_padded_sequence(weight, length, batch_first=True)[0]
+                weight, alpha, beta = model(image, cap, cap_len)
+                weight = pack_padded_sequence(weight, cap_len, batch_first=True)[0]
                 loss = criterion(weight, target)
 
                 alpha_loss = torch.sum(torch.pow((1-torch.sum(alpha,1)),2)) / batch_size
@@ -77,7 +79,7 @@ def train_cap(args, cfg, model, train_data, val_data, val_cap):
         print("*** evaluate val set ***")
         model.eval()
         sentence_list = []
-        for i, (image, img_id) in tqdm(enumerate(val_data)):
+        for i, (image, img_id, img_path) in tqdm(enumerate(val_data)):
             image = image.to(device)
             img_id = img_id[0]
 
@@ -110,7 +112,7 @@ def train_cap(args, cfg, model, train_data, val_data, val_cap):
             break
 
 
-def eval_cap(args, cfg, model, test_data):
+def eval_cap(args, cfg, model, test_data, test_cap):
     ''' test caption result'''
     '''测试caption模型'''
     # create save file (创建保存文件夹)
@@ -118,7 +120,7 @@ def eval_cap(args, cfg, model, test_data):
 
     model.eval()
     sentence_list = []
-    for i, (image, img_id) in tqdm(enumerate(test_data)):
+    for i, (image, img_id, path) in tqdm(enumerate(test_data)):
         image = image.to(device)
         img_id = img_id[0]
 
@@ -130,7 +132,7 @@ def eval_cap(args, cfg, model, test_data):
 
     print('*** compute scores ***')
     sen_json = save_sentence(sentence_list, 1, sen_path)
-    results = coco_metrics(cfg.test_kar_cap, sen_json)
+    results = coco_metrics(test_cap, sen_json)
 
     save_metrics(results, 1, metrics_path)
     print('*** complete prediction ***')
