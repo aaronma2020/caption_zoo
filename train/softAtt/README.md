@@ -16,3 +16,10 @@
 | -------- | ----- | ----- | ----- | ----- | ------ | ------- | ----- | ----- |
 | soft att | 72.4  | 55.5  | 41.5  | 31.1  | 25.2   | 53.4    | 95.8  | 18.1  |
 
+
+
+visualize attention
+
+```python visual_attention.py```
+
+![image-20200106130452631](/Users/mazheng/Documents/code/caption_models/train/softAtt/image-20200106130452631.png)
