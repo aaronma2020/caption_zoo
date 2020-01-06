@@ -22,4 +22,5 @@ visualize attention
 
 ```python visual_attention.py```
 
-![image-20200106130452631](/Users/mazheng/Documents/code/caption_models/train/softAtt/image-20200106130452631.png)
+![image-20200106130452631](./image-20200106130452631.png)
+
