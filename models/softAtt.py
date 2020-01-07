@@ -182,6 +182,7 @@ class AttDecoder(nn.Module):
         return sentence, alphas[0], betas[0]
 
 
+
     def fea_init_state(self, fea_vec):
         '''use image features to initiate state of LSTM'''
         '''用features信息初始化LSTM状态'''

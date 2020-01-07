@@ -227,7 +227,7 @@ class NIC(nn.Module):
 
         return weight
 
-    def generate(self, image, beam_num):
+    def generate(self, image, beam_num, need_extra=True):
         fea_vec,= self.encoder(image)
         sentence = self.decoder.beam_search(fea_vec, beam_num)
         return sentence
